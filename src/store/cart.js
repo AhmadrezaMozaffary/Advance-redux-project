@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { uiActions } from "./ui";
 
 const cartSlice = createSlice({
   name: "cart",
@@ -48,6 +49,61 @@ const cartSlice = createSlice({
     },
   },
 });
+
+export const sendCartData = (cart) => {
+  return async (dispatch) => {
+    // Showing the Notification component
+    dispatch(uiActions.changeNotifVisibality());
+
+    // Change content of Notification component to Sending
+    dispatch(
+      uiActions.showNotification({
+        status: "pending",
+        title: "Sending...",
+        message: "Sending cart data! ",
+      })
+    );
+
+    const sendRequest = async () => {
+      const res = await fetch(
+        "https://react-http-42477-default-rtdb.firebaseio.com/cart.json",
+        {
+          method: "PUT",
+          body: JSON.stringify(cart),
+        }
+      );
+
+      if (!res.ok) throw new Error("Something went wrong!");
+    };
+
+    try {
+      await sendRequest();
+
+      // Change content of Notification component to Success
+      dispatch(
+        uiActions.showNotification({
+          status: "success",
+          title: "Success",
+          message: "Send cart data successfuly!",
+        })
+      );
+    } catch (error) {
+      // Change content of Notification component to Error
+      dispatch(
+        uiActions.showNotification({
+          status: "error",
+          title: "Error!",
+          message: "Sending cart data failed! ",
+        })
+      );
+    }
+
+    // Delete the Notification component from UI after 2s
+    setTimeout(() => {
+      dispatch(uiActions.changeNotifVisibality());
+    }, 2000);
+  };
+};
 
 export const cartActions = cartSlice.actions;
 export default cartSlice;
