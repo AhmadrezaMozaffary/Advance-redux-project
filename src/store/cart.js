@@ -1,13 +1,18 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { uiActions } from "./ui";
 
 const cartSlice = createSlice({
   name: "cart",
   initialState: {
     items: [],
     totalQuantity: 0,
+    changed: false,
   },
   reducers: {
+    replaceCart(state, action) {
+      state.totalQuantity = action.payload.totalQuantity;
+      state.items = action.payload.items;
+      state.changed = false;
+    },
     addItemToCart(state, action) {
       // Get new item
       const newItem = action.payload;
@@ -17,6 +22,8 @@ const cartSlice = createSlice({
 
       //Update the quantity
       state.totalQuantity++;
+
+      state.changed = true;
 
       if (!existingItem) {
         state.items.push({
@@ -40,6 +47,8 @@ const cartSlice = createSlice({
       //Update the quantity
       state.totalQuantity--;
 
+      state.changed = true;
+
       if (existingItem.quantity === 1) {
         state.items = state.items.filter((item) => item.id !== id);
       }
@@ -49,61 +58,6 @@ const cartSlice = createSlice({
     },
   },
 });
-
-export const sendCartData = (cart) => {
-  return async (dispatch) => {
-    // Showing the Notification component
-    dispatch(uiActions.changeNotifVisibality());
-
-    // Change content of Notification component to Sending
-    dispatch(
-      uiActions.showNotification({
-        status: "pending",
-        title: "Sending...",
-        message: "Sending cart data! ",
-      })
-    );
-
-    const sendRequest = async () => {
-      const res = await fetch(
-        "https://react-http-42477-default-rtdb.firebaseio.com/cart.json",
-        {
-          method: "PUT",
-          body: JSON.stringify(cart),
-        }
-      );
-
-      if (!res.ok) throw new Error("Something went wrong!");
-    };
-
-    try {
-      await sendRequest();
-
-      // Change content of Notification component to Success
-      dispatch(
-        uiActions.showNotification({
-          status: "success",
-          title: "Success",
-          message: "Send cart data successfuly!",
-        })
-      );
-    } catch (error) {
-      // Change content of Notification component to Error
-      dispatch(
-        uiActions.showNotification({
-          status: "error",
-          title: "Error!",
-          message: "Sending cart data failed! ",
-        })
-      );
-    }
-
-    // Delete the Notification component from UI after 2s
-    setTimeout(() => {
-      dispatch(uiActions.changeNotifVisibality());
-    }, 2000);
-  };
-};
 
 export const cartActions = cartSlice.actions;
 export default cartSlice;
